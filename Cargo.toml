@@ -1,0 +1,10 @@
+[package]
+name = "vapi"
+version = "0.0.1"
+authors = ["Guillaume Quintard <guillaume@varnish-software.com>"]
+
+[dependencies]
+libc = "*"
+
+[lib]
+name = "vapi"
