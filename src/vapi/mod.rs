@@ -123,7 +123,9 @@ impl VsmData {
 		unsafe { ffi::VSM_ResetError(self.vsm); };
 	}
 
-	fn stat_iter<F>(&self, cb: F) where F: FnMut(&ffi::VsmEntry) -> bool {
+	/// Calls provided callback on each stat item returned
+	pub fn stat_iter<F>(&self, cb: F)
+			where F: FnMut(&ffi::VsmEntry) -> bool {
 		assert!(!self.vsm.is_null());
 		let cb = &cb as *const _ as *const c_void;
 		unsafe {
@@ -134,7 +136,7 @@ impl VsmData {
 		}
 	}
 
-	/// returns a vector of owned `Stats`
+	/// returns a vector of owned `Stats` (segfaults for the moment...)
 	pub fn stats(&self) -> Vec<Stats> {
 		assert!(!self.vsm.is_null());
 		let mut v = Vec::new();
@@ -162,9 +164,10 @@ impl VsmData {
 			);
 		v
 	}
-	/// Reads the log 
+	/// Reads the log and call provided callback on each `&VslTransaction`
+	/// slice returned.
 	pub fn log_iter<F>(&self, cb: F)
-		where F: FnMut(& [&VslTransaction]) -> bool {
+			where F: FnMut(& [&VslTransaction]) -> bool {
 		// TODO: replace assert with errors
 		let cb = &cb as *const _ as *const c_void;
 		let vsl = unsafe { ffi::VSL_New() }; 
@@ -191,6 +194,7 @@ impl VsmData {
 		unsafe { ffi::VSL_Delete(vsl) };
 	}
 
+	/// Example of iter_log use.
 	pub fn log(&self) {
 		self.log_iter( |pt| -> bool {
 			for t in pt {
@@ -199,13 +203,14 @@ impl VsmData {
 				println!("=> type: {}", t.typ);
 				println!("=> reason: {}", t.reason);
 				for c in *t {
-					println!("{:8}\t{:8}\t{}", c.get_stag(), c.get_ntag(), c.get_string());
+					println!("{:8}\t{:8}\t{}", c.get_stag(),
+								c.get_ntag(),
+								c.get_string());
 				}
 			}
 			true
 		}
 		);
-		println!("out log");
 	}
 
 	/// Return the file location being used.
